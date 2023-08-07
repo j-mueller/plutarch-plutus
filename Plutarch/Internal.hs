@@ -59,6 +59,7 @@ import Plutarch.Internal.Evaluate (evalScript)
 import Plutarch.Script (Script (Script))
 import PlutusCore (Some (Some), ValueOf (ValueOf))
 import PlutusCore qualified as PLC
+import PlutusCore.Version qualified as PLC
 import PlutusCore.DeBruijn (DeBruijn (DeBruijn), Index (Index))
 import UntypedPlutusCore qualified as UPLC
 
@@ -109,7 +110,7 @@ hashRawTerm' (RConstant x) = flip hashUpdate ("5" :: BS.ByteString) . flip hashU
 hashRawTerm' (RBuiltin x) = flip hashUpdate ("6" :: BS.ByteString) . flip hashUpdate (F.flat x)
 hashRawTerm' RError = flip hashUpdate ("7" :: BS.ByteString)
 hashRawTerm' (RHoisted (HoistedTerm hash _)) = flip hashUpdate ("8" :: BS.ByteString) . flip hashUpdate hash
-hashRawTerm' (RCompiled code) = flip hashUpdate ("9" :: BS.ByteString) . flip hashUpdate (F.flat code)
+hashRawTerm' (RCompiled code) = flip hashUpdate ("9" :: BS.ByteString) . flip hashUpdate (F.flat $ UPLC.UnrestrictedProgram $ UPLC.Program () PLC.firstVersion code)
 
 hashRawTerm :: RawTerm -> Dig
 hashRawTerm t = hashFinalize . hashRawTerm' t $ hashInit
@@ -373,7 +374,7 @@ phoistAcyclic t = Term \_ ->
   asRawTerm t 0 >>= \case
     -- Built-ins are smaller than variable references
     t'@(getTerm -> RBuiltin _) -> pure t'
-    t' -> case evalScript . Script . UPLC.Program () (PLC.defaultVersion ()) $ compile' t' of
+    t' -> case evalScript . Script . UPLC.Program () (PLC.latestVersion) $ compile' t' of
       (Right _, _, _) ->
         let hoisted = HoistedTerm (hashRawTerm . getTerm $ t') (getTerm t')
          in pure $ TermResult (RHoisted hoisted) (hoisted : getDeps t')
@@ -466,7 +467,7 @@ compile' t =
 -- | Compile a (closed) Plutus Term to a usable script
 compile :: Config -> ClosedTerm a -> Either Text Script
 compile config t = case asClosedRawTerm t of
-  TermMonad (ReaderT t') -> Script . UPLC.Program () (UPLC.Version () 1 0 0) . compile' <$> t' config
+  TermMonad (ReaderT t') -> Script . UPLC.Program () PLC.plcVersion100 . compile' <$> t' config
 
 hashTerm :: Config -> ClosedTerm a -> Either Text Dig
 hashTerm config t = hashRawTerm . getTerm <$> runReaderT (runTermMonad $ asRawTerm t 0) config

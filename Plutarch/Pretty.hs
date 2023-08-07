@@ -299,6 +299,7 @@ prettyUPLC uplc = runST $ do
         PP.hang indentWidth $
           PP.sep $
             functionDoc : argsDoc
+    go x = fail $ "Not implemented: " <> show x
 
 prettyIfThenElse ::
   (t -> PrettyMonad s (PP.Doc ann)) ->

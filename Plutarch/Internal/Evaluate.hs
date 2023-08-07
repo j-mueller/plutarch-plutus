@@ -38,7 +38,7 @@ evalScriptHuge = evalScript' budget
 -- | Evaluate a script with a specific budget, returning the trace log and term result.
 evalScript' :: ExBudget -> Script -> (Either (Cek.CekEvaluationException PLC.NamedDeBruijn PLC.DefaultUni PLC.DefaultFun) Script, ExBudget, [Text])
 evalScript' budget (Script (Program _ _ t)) = case evalTerm budget (UPLC.termMapNames UPLC.fakeNameDeBruijn t) of
-  (res, remaining, logs) -> (Script . Program () (PLC.defaultVersion ()) . UPLC.termMapNames UPLC.unNameDeBruijn <$> res, remaining, logs)
+  (res, remaining, logs) -> (Script . Program () PLC.latestVersion . UPLC.termMapNames UPLC.unNameDeBruijn <$> res, remaining, logs)
 
 evalTerm ::
   ExBudget ->
