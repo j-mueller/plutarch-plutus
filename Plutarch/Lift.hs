@@ -69,7 +69,7 @@ These laws must be upheld for the sake of soundness of the type system.
 -}
 class
   ( PUnsafeLiftDecl (PConstanted h)
-  , PLC.DefaultUni `PLC.Includes` PConstantRepr h
+  , PLC.DefaultUni `PLC.HasTypeAndTermLevel` PConstantRepr h
   ) =>
   PConstantDecl (h :: Type)
   where
@@ -143,7 +143,7 @@ represented by a builtin UPLC type that is /not/ @Data@.
 newtype DerivePConstantDirect (h :: Type) (p :: PType) = DerivePConstantDirect h
 
 instance
-  (PLift p, PLC.DefaultUni `PLC.Includes` h) =>
+  (PLift p, PLC.DefaultUni `PLC.HasTypeAndTermLevel` h) =>
   PConstantDecl (DerivePConstantDirect h p)
   where
   type PConstantRepr (DerivePConstantDirect h p) = h

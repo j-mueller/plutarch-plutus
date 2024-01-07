@@ -120,7 +120,7 @@ instance (PLift a, PLift b) => PUnsafeLiftDecl (PBuiltinPair a b) where
   type PLifted (PBuiltinPair a b) = (PLifted a, PLifted b)
 
 -- FIXME: figure out good way of deriving this
-instance (PConstant a, PConstant b) => PConstantDecl (a, b) where
+instance (PLC.PLC @Type Void PLC.DefaultUni (PConstantRepr a), PConstant a, PConstant b) => PConstantDecl (a, b) where
   type PConstantRepr (a, b) = (PConstantRepr a, PConstantRepr b)
   type PConstanted (a, b) = PBuiltinPair (PConstanted a) (PConstanted b)
   pconstantToRepr (x, y) = (pconstantToRepr x, pconstantToRepr y)
@@ -165,7 +165,7 @@ pnullBuiltin = phoistAcyclic $ pforce $ punsafeBuiltin PLC.NullList
 pconsBuiltin :: Term s (a :--> PBuiltinList a :--> PBuiltinList a)
 pconsBuiltin = phoistAcyclic $ pforce $ punsafeBuiltin PLC.MkCons
 
-instance PConstant a => PConstantDecl [a] where
+instance (PLC.PLC @Type Void PLC.DefaultUni (PConstantRepr a), PConstant a) => PConstantDecl [a] where
   type PConstantRepr [a] = [PConstantRepr a]
   type PConstanted [a] = PBuiltinList (PConstanted a)
   pconstantToRepr x = pconstantToRepr <$> x
