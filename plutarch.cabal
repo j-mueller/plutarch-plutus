@@ -149,7 +149,7 @@ library
     , lens
     , memory
     , mtl
-    , plutus-core        >=1.20.0.0
+    , plutus-core        >=1.21.0.0
     , plutus-ledger-api
     , plutus-tx
     , prettyprinter

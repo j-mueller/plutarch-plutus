@@ -38,8 +38,8 @@ import Plutarch.Internal (ClosedTerm, Config (Config, tracingMode), PType, Term,
 import Plutarch.Internal.Evaluate (EvalError, evalScriptHuge)
 import Plutarch.Script (unScript)
 import PlutusCore qualified as PLC
-import PlutusCore.Builtin (KnownTypeError, readKnownConstant)
-import PlutusCore.Evaluation.Machine.Exception (_UnliftingErrorE)
+import PlutusCore.Builtin (BuiltinError, readKnownConstant)
+import PlutusCore.Evaluation.Machine.Exception (_UnliftingError)
 import PlutusTx (BuiltinData, Data, builtinDataToData, dataToBuiltinData)
 import PlutusTx.Builtins.Class (FromBuiltin, ToBuiltin, fromBuiltin, toBuiltin)
 import Universe (Includes)
@@ -103,7 +103,7 @@ pconstant x = punsafeConstantInternal $ PLC.someValue @(PConstantRepr (PLifted p
 -}
 data LiftError
   = LiftError_EvalError EvalError
-  | LiftError_KnownTypeError KnownTypeError
+  | LiftError_BuiltinError BuiltinError
   | LiftError_FromRepr
   | LiftError_CompilationError Text
   deriving stock (Eq)
@@ -120,7 +120,7 @@ plift' config prog = case compile config prog of
         Right r -> case pconstantFromRepr r of
           Just h -> Right h
           Nothing -> Left LiftError_FromRepr
-        Left e -> Left $ LiftError_KnownTypeError e
+        Left e -> Left $ LiftError_BuiltinError e
     (Left e, _, _) -> Left $ LiftError_EvalError e
 
 -- | Like `plift'` but throws on failure.
@@ -128,8 +128,8 @@ plift :: forall p. (HasCallStack, PLift p) => ClosedTerm p -> PLifted p
 plift prog = case plift' (Config {tracingMode = DoTracing}) prog of
   Right x -> x
   Left LiftError_FromRepr -> error "plift failed: pconstantFromRepr returned 'Nothing'"
-  Left (LiftError_KnownTypeError e) ->
-    let unliftErrMaybe = e ^? _UnliftingErrorE
+  Left (LiftError_BuiltinError e) ->
+    let unliftErrMaybe = e ^? _UnliftingError
      in error $
           "plift failed: incorrect type: "
             <> maybe "absurd evaluation failure" show unliftErrMaybe
